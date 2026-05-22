@@ -1,66 +1,41 @@
 # Git Workflow and Pipelines
 
-On this page, you will learn about the Git workflow used by this accelerator, including branches and how changes to the code can trigger automation pipelines. The workflow follows the [Git flow](https://nvie.com/posts/a-successful-git-branching-model) methodology, which is widely recognized for effectively managing Git with multiple environments like **dev**, **qa**, and **prod**. However, feel free to choose the workflow that best suits your project's needs.
+This section presents a practical Git workflow example that illustrates how branches and releases can trigger automation pipelines. Based on the popular [Git flow](https://nvie.com/posts/a-successful-git-branching-model) model, it helps manage multiple environments—**dev**, **qa**, and **prod**—but can be adapted to fit your project's needs.
 
-# Git Workflow
 
-The image below represents the workflow used in the project repository. Let's see how the delivery of a new feature works based on this workflow. In this example, we are developing a new feature called "Feature X," which will be delivered in the project's release 1.0.0.
+## Overview
 
-![GIt Workflow](../media/git_workflow_branching.png)
+The diagram below illustrates our workflow for delivering a new feature (here “Feature X”) as part of release 1.0.0. Each automated pipeline plays a role in the process—some ensure code quality or run AI-assisted evaluations, while others handle deployment to the appropriate environment.
 
-Here's a detailed description of the workflow:
 
-1. **Feature Branch**
+![Git Workflow](../media/git_workflow_branching.png)
 
-The workflow begins when the development team creates a feature branch named `feature/feature_x` from the `develop` branch. This branch is where developers work on developing the new feature X.
+## Steps
 
-```bash
-git checkout develop
-git pull
-git checkout -b feature/feature_x
-```
+1. **Create a Feature Branch**
+   Create a new branch off of **develop** for your work on Feature X:
 
-2. **Pull Request (PR)**:
+   Do all your development in `feature/feature_x`.
 
-Upon completing the feature, a Pull Request (PR) is initiated from the feature branch `feature/feature_x`  to the `develop` branch, which is the default branch where the team integrates changes.
+2. **Open a PR to develop**
+   When your changes are ready, push the branch and open a PR against **develop**. This fires the **PR Evaluation Pipeline** (linting, unit tests, AI-driven checks):
 
-The creation of the PR triggers a *PR Evaluation Pipeline* to ensure that the code adheres to standards, passes unit tests, and the orchestration flow is evaluated by AI to ensure it meets quality metrics.
+3. **Merge into develop & Deploy to dev**
+   Once approved, merge the PR into `develop`. That triggers:
 
-```bash
-git add .
-git commit -m "Feature complete: [Your Feature Description]"
-git push origin feature/feature_x
-# Use GitHub CLI or the GitHub website to create PR.
-gh pr create --base develop --head feature/feature_x --title "[Your Feature Name]" --body "Description of the changes and the impact."
-```
+   * **CI Pipeline**: Builds the flow and runs full AI-assisted tests.
+   * **CD Pipeline**: Deploys the updated flow to the **dev** environment.
 
-3. **Merge to develop**:
+4. **Create a Release Branch**
+   Creating this branchtriggers the **CD Pipeline** to deploy to **qa** for UAT and red-teaming.
 
-Once the Pull Request is approved, it is merged into the `develop` branch. This merge triggers the *Continuous Integration (CI) Pipeline*, which builds the orchestration flow and conducts AI-assisted evaluations using a comprehensive test dataset based on the [Golden Dataset](https://aka.ms/copilot-golden-dataset-guide). Upon successful completion, the *Continuous Deployment (CD) Pipeline* is executed to deploy the flow to the **dev** environment.
+5. **Open a PR to main from the Release Branch**
+   When the new Release passes QA, open a PR targeting **main**
 
-4. **Release Branch (Release/1.0.0)**:
+6. **Create Final Release & Deploy to prod**
+   Tag the final version on `main` and publish a GitHub Release:
 
-After confirming the stability of the `develop` branch through testing in **dev**, a release branch `release/1.0.0` is created from `develop`. This triggers a *Continuous Deployment (CD) pipeline* to deploy the application to the **qa** environment. Before deployment, an AI-based evaluation assesses [quality](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/develop/flow-evaluate-sdk), risk and [safety](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/develop/simulator-interaction-data) evaluation. The application in **qa** is then used for User Acceptance Testing (UAT) and [red-teaming](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/red-teaming) ou LLM App.
-
-```bash
-git checkout develop
-git pull origin develop
-git checkout -b release/1.0.0
-git push origin release/1.0.0
-```
-
-5. **Pull Request to main**:
-
-After UAT tests in the **qa** environment confirm that the application is ready for production, a Pull Request (PR) is created to merge the changes into the `main` branch.
-
-```bash
-# Use GitHub CLI or the GitHub website to create PR.
-gh pr create --base main --head release/1.0.0 --title "Release 1.0.0" --body "Merging release/1.0.0 into main after successful UAT in QA environment" 
-```
-
-6. **Merge to main**:
-
-Once the pull request (PR) to the `main` branch is manually approved, the release branch is merged into the `main` branch. This action triggers the Continuous Deployment (CD) pipeline, which deploys the code to the **prod** environment.
+   This final tag triggers the **CD Pipeline** to deploy v1.0.0 to the **prod** environment.
 
 ## CI/CD Pipelines
 
@@ -68,9 +43,9 @@ The CI/CD (Continuous Integration/Continuous Deployment) pipelines automate inte
 
 ![Pipelines](../media/git_workflow_pipelines.png)
 
-**The Pull Request Evaluation Pipeline** begins with unit tests, followed by a code review, and concludes with AI-assisted prompt evaluation to validate code changes before integration.
+**The Pull Request Evaluation Pipeline** begins with unit tests, followed by a code review to validate code changes before integration.
 
-**In the Continuous Integration Pipeline**, the process starts with unit tests and code reviews, followed by AI-assisted flow evaluation to identify potential issues. The application is then built, and the flow image is registered for deployment.
+**In the Continuous Integration Pipeline**, the process starts with unit tests and code reviews, followed by GenAI-assisted flow evaluation to identify potential issues. The application is then built, and the flow image is registered for deployment.
 
 **The Continuous Deployment Pipeline** operates across three environments: dev, qa, and prod. Provisioning of resources is performed when necessary, and the deployment of the application is executed in the respective environment.
 
